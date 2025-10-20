@@ -43,7 +43,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_relative_timestring() {
+    fn test_parse() {
         assert_eq!(
             parse_relative_time("2d 1h"),
             Ok((
@@ -54,7 +54,47 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_negative_relative_timestring() {
+    fn test_parse_complex() {
+        assert_eq!(
+            parse_relative_time("3y 2mo 2d 1h 5m"),
+            Ok((
+                "",
+                ParsedTime::Relative(
+                    RelativeTime::new()
+                        .years(3)
+                        .months(2)
+                        .days(2)
+                        .hours(1)
+                        .minutes(5)
+                )
+            ))
+        );
+    }
+
+    #[test]
+    fn test_parse_misordered() {
+        assert_eq!(
+            parse_relative_time("5m 3d 2mo"),
+            Ok((
+                "",
+                ParsedTime::Relative(RelativeTime::new().minutes(5).days(3).months(2))
+            ))
+        );
+    }
+
+    #[test]
+    fn test_parse_spaced_longhand() {
+        assert_eq!(
+            parse_relative_time("5 months 3 days 1 minute ago"),
+            Ok((
+                "",
+                ParsedTime::Relative(RelativeTime::new().months(5).days(3).minutes(1).ago())
+            ))
+        );
+    }
+
+    #[test]
+    fn test_parse_negative() {
         assert_eq!(
             parse_relative_time("2d 1h ago"),
             Ok((
