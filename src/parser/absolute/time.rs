@@ -1,0 +1,231 @@
+use nom::{
+    IResult, Parser,
+    branch::alt,
+    bytes::{complete::take_while_m_n, tag_no_case},
+    character::complete::{char, space1},
+    combinator::{map_res, opt, peek, value},
+    sequence::{preceded, separated_pair},
+};
+use strum_macros::Display;
+
+#[derive(PartialEq, Debug)]
+pub struct WallClockTime {
+    pub hour: u8,
+    pub minute: u8,
+    pub second: u8,
+}
+
+#[derive(PartialEq, Debug, Display)]
+enum WallClockTimeError {
+    OutOfRangeHours,
+    OutOfRangeMinutes,
+    OutOfRangeSeconds,
+}
+
+impl std::error::Error for WallClockTimeError {}
+
+impl WallClockTime {
+    pub fn new(
+        mut hour: u8,
+        minute: u8,
+        second: u8,
+        period: Option<TimePeriod>,
+    ) -> Result<Self, WallClockTimeError> {
+        if let Some(TimePeriod::Pm) = period {
+            hour += 12;
+
+            if hour == 24 {
+                hour = 0;
+            }
+        }
+
+        if hour > 23 {
+            return Err(WallClockTimeError::OutOfRangeHours);
+        }
+        if minute > 59 {
+            return Err(WallClockTimeError::OutOfRangeMinutes);
+        }
+        if second > 59 {
+            return Err(WallClockTimeError::OutOfRangeSeconds);
+        }
+
+        Ok(WallClockTime {
+            hour,
+            minute,
+            second,
+        })
+    }
+}
+
+fn parse_u8(input: &str) -> Result<u8, std::num::ParseIntError> {
+    input.parse()
+}
+
+fn parse_hours(input: &str) -> IResult<&str, u8> {
+    map_res(take_while_m_n(1, 2, |c: char| c.is_ascii_digit()), parse_u8).parse(input)
+}
+
+fn parse_mins_or_secs(input: &str) -> IResult<&str, u8> {
+    map_res(take_while_m_n(2, 2, |c: char| c.is_ascii_digit()), parse_u8).parse(input)
+}
+
+fn parse_optional_trailing_seconds(input: &str) -> IResult<&str, Option<u8>> {
+    if let Ok((_, _)) = peek(char::<&str, nom::error::Error<&str>>(':')).parse(input) {
+        let (input, seconds) = preceded(char(':'), parse_mins_or_secs).parse(input)?;
+
+        return Ok((input, Some(seconds)));
+    }
+
+    Ok((input, None))
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum TimePeriod {
+    Am,
+    Pm,
+}
+
+fn parse_am_pm_suffix(input: &str) -> IResult<&str, Option<TimePeriod>> {
+    opt(preceded(
+        space1,
+        alt((
+            value(TimePeriod::Am, tag_no_case("am")),
+            value(TimePeriod::Pm, tag_no_case("pm")),
+        )),
+    ))
+    .parse(input)
+}
+
+pub fn parse_wall_clock_time(input: &str) -> IResult<&str, WallClockTime> {
+    map_res(
+        separated_pair(
+            parse_hours,
+            char(':'),
+            (
+                parse_mins_or_secs,
+                parse_optional_trailing_seconds,
+                parse_am_pm_suffix,
+            ),
+        ),
+        |(hours, (minutes, seconds, period))| {
+            WallClockTime::new(hours, minutes, seconds.unwrap_or(0), period)
+        },
+    )
+    .parse(input)
+}
+
+#[cfg(test)]
+mod tests {
+    use nom::error::ErrorKind;
+
+    use super::*;
+
+    #[test]
+    fn test_parse_hours_mins() {
+        assert_eq!(
+            parse_wall_clock_time("12:05"),
+            Ok(("", WallClockTime::new(12, 5, 0, None).unwrap()))
+        )
+    }
+
+    #[test]
+    fn test_parse_hours_leading_zero() {
+        assert_eq!(
+            parse_wall_clock_time("07:05"),
+            Ok(("", WallClockTime::new(7, 5, 0, None).unwrap()))
+        )
+    }
+
+    #[test]
+    fn test_parse_hours_single_digit() {
+        assert_eq!(
+            parse_wall_clock_time("7:05"),
+            Ok(("", WallClockTime::new(7, 5, 0, None).unwrap()))
+        )
+    }
+
+    #[test]
+    fn test_parse_hours_mins_secs() {
+        assert_eq!(
+            parse_wall_clock_time("12:05:30"),
+            Ok(("", WallClockTime::new(12, 5, 30, None).unwrap()))
+        )
+    }
+
+    #[test]
+    fn test_hours_out_of_range() {
+        assert_eq!(
+            parse_wall_clock_time("25:05:30"),
+            Err(nom::Err::Error(nom::error::Error::new(
+                "25:05:30",
+                ErrorKind::MapRes,
+            )))
+        )
+    }
+
+    #[test]
+    fn test_mins_out_of_range() {
+        assert_eq!(
+            parse_wall_clock_time("23:65:30"),
+            Err(nom::Err::Error(nom::error::Error::new(
+                "23:65:30",
+                ErrorKind::MapRes,
+            )))
+        )
+    }
+
+    #[test]
+    fn test_secs_out_of_range() {
+        assert_eq!(
+            parse_wall_clock_time("23:05:60 am"),
+            Err(nom::Err::Error(nom::error::Error::new(
+                "23:05:60 am",
+                ErrorKind::MapRes,
+            )))
+        )
+    }
+
+    #[test]
+    fn test_parse_time_with_am() {
+        assert_eq!(
+            parse_wall_clock_time("12:05:30 am"),
+            Ok((
+                "",
+                WallClockTime::new(12, 5, 30, Some(TimePeriod::Am)).unwrap()
+            ))
+        )
+    }
+
+    #[test]
+    fn test_parse_time_with_pm() {
+        assert_eq!(
+            parse_wall_clock_time("8:05:30 pm"),
+            Ok((
+                "",
+                WallClockTime::new(8, 5, 30, Some(TimePeriod::Pm)).unwrap()
+            ))
+        )
+    }
+
+    #[test]
+    fn test_parse_time_with_pm_boundary() {
+        assert_eq!(
+            parse_wall_clock_time("12:05:30 pm"),
+            Ok((
+                "",
+                WallClockTime::new(12, 5, 30, Some(TimePeriod::Pm)).unwrap()
+            ))
+        )
+    }
+
+    #[test]
+    fn test_parse_time_with_mixed_case_unit() {
+        assert_eq!(
+            parse_wall_clock_time("8:05:30 pM"),
+            Ok((
+                "",
+                WallClockTime::new(8, 5, 30, Some(TimePeriod::Pm)).unwrap()
+            ))
+        )
+    }
+}
