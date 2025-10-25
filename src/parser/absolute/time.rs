@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{Datelike, Days, NaiveDate, NaiveDateTime, Timelike, Utc};
 
 use super::{day_offset::DayOffset, wallclock_time::WallClockTime};
 
@@ -12,6 +12,30 @@ pub enum FlexiDate {
 pub struct AbsoluteTime {
     time: WallClockTime,
     date: FlexiDate,
+}
+
+impl AbsoluteTime {
+    pub fn to_chrono(&self) -> NaiveDateTime {
+        let mut datetime = Utc::now().naive_utc();
+
+        datetime = match &self.date {
+            FlexiDate::Date(date) => date.and_time(datetime.time()),
+            FlexiDate::DayOffset(DayOffset::Fixed(days)) => {
+                if *days < 0 {
+                    datetime.checked_sub_days(Days::new(-days as u64)).unwrap()
+                } else {
+                    datetime.checked_add_days(Days::new(*days as u64)).unwrap()
+                }
+            }
+            FlexiDate::DayOffset(DayOffset::NextDayOccurrence(weekday)) => {
+                let current_day = datetime.weekday();
+                let offset = 7 - current_day.days_since(weekday.clone());
+                datetime.checked_add_days(Days::new(offset.into())).unwrap()
+            }
+        };
+
+        datetime
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
