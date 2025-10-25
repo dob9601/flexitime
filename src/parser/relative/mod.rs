@@ -9,7 +9,7 @@ mod suffix;
 pub mod time;
 mod units;
 
-pub fn parse_relative_time(input: &str) -> IResult<&str, ParsedTime> {
+pub fn parse_relative_time(input: &str) -> IResult<&str, RelativeTime> {
     let (input, (units, suffix)) = (
         separated_list1(space1, units::parse_unit),
         suffix::parse_suffix,
@@ -35,7 +35,7 @@ pub fn parse_relative_time(input: &str) -> IResult<&str, ParsedTime> {
         time.negative = true;
     }
 
-    Ok((input, ParsedTime::Relative(time)))
+    Ok((input, time))
 }
 
 #[cfg(test)]
@@ -46,10 +46,7 @@ mod tests {
     fn test_parse() {
         assert_eq!(
             parse_relative_time("2d 1h"),
-            Ok((
-                "",
-                ParsedTime::Relative(RelativeTime::new().days(2).hours(1))
-            ))
+            Ok(("", RelativeTime::new().days(2).hours(1)))
         );
     }
 
@@ -59,14 +56,12 @@ mod tests {
             parse_relative_time("3y 2mo 2d 1h 5m"),
             Ok((
                 "",
-                ParsedTime::Relative(
-                    RelativeTime::new()
-                        .years(3)
-                        .months(2)
-                        .days(2)
-                        .hours(1)
-                        .minutes(5)
-                )
+                RelativeTime::new()
+                    .years(3)
+                    .months(2)
+                    .days(2)
+                    .hours(1)
+                    .minutes(5)
             ))
         );
     }
@@ -75,10 +70,7 @@ mod tests {
     fn test_parse_misordered() {
         assert_eq!(
             parse_relative_time("5m 3d 2mo"),
-            Ok((
-                "",
-                ParsedTime::Relative(RelativeTime::new().minutes(5).days(3).months(2))
-            ))
+            Ok(("", RelativeTime::new().minutes(5).days(3).months(2)))
         );
     }
 
@@ -86,10 +78,7 @@ mod tests {
     fn test_parse_spaced_longhand() {
         assert_eq!(
             parse_relative_time("5 months 3 days 1 minute ago"),
-            Ok((
-                "",
-                ParsedTime::Relative(RelativeTime::new().months(5).days(3).minutes(1).ago())
-            ))
+            Ok(("", RelativeTime::new().months(5).days(3).minutes(1).ago()))
         );
     }
 
@@ -97,10 +86,7 @@ mod tests {
     fn test_parse_negative() {
         assert_eq!(
             parse_relative_time("2d 1h ago"),
-            Ok((
-                "",
-                ParsedTime::Relative(RelativeTime::new().days(2).hours(1).ago())
-            ))
+            Ok(("", RelativeTime::new().days(2).hours(1).ago()))
         );
     }
 }

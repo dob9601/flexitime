@@ -1,9 +1,7 @@
-use chrono_tz::Tz;
-
-use super::relative::time::RelativeTime;
+use super::{absolute::AbsoluteTime, relative::time::RelativeTime};
 
 #[derive(Debug, PartialEq)]
 pub enum ParsedTime {
     Relative(RelativeTime),
-    Absolute(chrono::DateTime<Tz>),
+    Absolute(AbsoluteTime),
 }
