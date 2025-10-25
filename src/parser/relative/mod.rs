@@ -1,4 +1,10 @@
-use nom::{IResult, Parser, character::complete::space1, multi::separated_list1};
+use nom::{
+    IResult, Parser,
+    bytes::complete::tag_no_case,
+    character::complete::{multispace1, space1},
+    combinator::opt,
+    multi::separated_list1,
+};
 use suffix::Suffix;
 use time::RelativeTime;
 use units::RelativeUnit;
@@ -8,6 +14,8 @@ pub mod time;
 mod units;
 
 pub fn parse_relative_time(input: &str) -> IResult<&str, RelativeTime> {
+    let (input, _) = opt((tag_no_case("in"), multispace1)).parse(input)?;
+
     let (input, (units, suffix)) = (
         separated_list1(space1, units::parse_unit),
         suffix::parse_suffix,
@@ -77,6 +85,14 @@ mod tests {
         assert_eq!(
             parse_relative_time("5 months 3 days 1 minute ago"),
             Ok(("", RelativeTime::new().months(5).days(3).minutes(1).ago()))
+        );
+    }
+
+    #[test]
+    fn test_parse_in_prefix() {
+        assert_eq!(
+            parse_relative_time("in 5 months 3 days 1 minute"),
+            Ok(("", RelativeTime::new().months(5).days(3).minutes(1)))
         );
     }
 
