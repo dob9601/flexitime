@@ -3,6 +3,7 @@ use nom::{
     IResult, Parser,
     branch::alt,
     bytes::complete::tag_no_case,
+    character::complete::space1,
     combinator::{opt, value},
     sequence::preceded,
 };
@@ -18,7 +19,7 @@ pub fn parse_day_offset(input: &str) -> IResult<&str, DayOffset> {
         value(DayOffset::Fixed(1), tag_no_case("tomorrow")),
         value(DayOffset::Fixed(-1), tag_no_case("yesterday")),
         preceded(
-            opt(alt((tag_no_case("this"), tag_no_case("next")))),
+            opt((alt((tag_no_case("this"), tag_no_case("next"))), space1)),
             alt((
                 value(
                     DayOffset::NextDayOccurrence(Weekday::Mon),
@@ -68,5 +69,30 @@ mod tests {
             parse_day_offset("tue"),
             Ok(("", DayOffset::NextDayOccurrence(Weekday::Tue)))
         );
+    }
+
+    #[test]
+    fn test_parse_weekday_with_prefix() {
+        assert_eq!(
+            parse_day_offset("this wednesday"),
+            Ok(("", DayOffset::NextDayOccurrence(Weekday::Wed)))
+        );
+        assert_eq!(
+            parse_day_offset("next thursday"),
+            Ok(("", DayOffset::NextDayOccurrence(Weekday::Thu)))
+        );
+    }
+
+    #[test]
+    fn test_parse_yesterday() {
+        assert_eq!(
+            parse_day_offset("yesterday"),
+            Ok(("", DayOffset::Fixed(-1)))
+        );
+    }
+
+    #[test]
+    fn test_parse_tomorrow() {
+        assert_eq!(parse_day_offset("tomorrow"), Ok(("", DayOffset::Fixed(1))));
     }
 }

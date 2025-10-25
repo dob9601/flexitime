@@ -3,8 +3,6 @@ use suffix::Suffix;
 use time::RelativeTime;
 use units::RelativeUnit;
 
-use super::time::ParsedTime;
-
 mod suffix;
 pub mod time;
 mod units;

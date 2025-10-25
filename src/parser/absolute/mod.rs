@@ -1,4 +1,4 @@
-use chrono::{Datelike, Days, NaiveDate, NaiveTime, Utc};
+use chrono::NaiveDate;
 use day_offset::DayOffset;
 use nom::{
     IResult, Parser, branch::alt, character::complete::space0, combinator::map, multi::fold_many1,
@@ -42,44 +42,11 @@ pub fn parse_absolute_time(input: &str) -> IResult<&str, AbsoluteTime> {
     )
     .map(|builder| dbg!(builder).build().unwrap())
     .parse(input)
-
-    // map((parse_wall_clock_time,), |(raw_time,)| {
-    //     let time = Utc::now()
-    //         .with_time(
-    //             NaiveTime::from_hms_opt(
-    //                 raw_time.hour.into(),
-    //                 raw_time.minute.into(),
-    //                 raw_time.second.into(),
-    //             )
-    //             .unwrap(),
-    //         )
-    //         .unwrap();
-    // })
-    // .parse(input);
-    // todo!()
-    // |acc, part| match part {
-    //     AbsoluteTimePart::DayOffset(DayOffset::Fixed(fixed_offset)) => {
-    //         if fixed_offset > 0 {
-    //             acc.checked_add_days(Days::new(fixed_offset as u64))
-    //                 .unwrap()
-    //         } else {
-    //             acc.checked_sub_days(Days::new(-fixed_offset as u64))
-    //                 .unwrap()
-    //         }
-    //     }
-    //     AbsoluteTimePart::DayOffset(DayOffset::NextDayOccurrence(weekday)) => {
-    //         let current_day = acc.weekday();
-    //         let offset = 7 - current_day.days_since(weekday);
-    //         acc.checked_add_days(Days::new(offset.into())).unwrap()
-    //     }
-    //     AbsoluteTimePart::WallClockTime(time) => acc.with_time(time.to_naive_time()).unwrap(),
-    // },
 }
 
 #[cfg(test)]
 mod tests {
-    use chrono::{Timelike, Weekday};
-    use chrono_tz::Tz;
+    use chrono::Weekday;
 
     use crate::parser::absolute::wallclock_time::TimePeriod;
 
