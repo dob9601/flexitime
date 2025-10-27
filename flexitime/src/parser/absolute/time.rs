@@ -15,8 +15,15 @@ pub struct AbsoluteTime {
 }
 
 impl AbsoluteTime {
+    pub fn new(time: WallClockTime, date: FlexiDate) -> Self {
+        Self { time, date }
+    }
+
     pub fn to_chrono(&self) -> NaiveDateTime {
-        let mut datetime = Utc::now().naive_utc();
+        let mut datetime = Utc::now()
+            .naive_utc()
+            .date()
+            .and_time(self.time.to_naive_time());
 
         datetime = match &self.date {
             FlexiDate::Date(date) => date.and_time(datetime.time()),

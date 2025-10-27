@@ -12,3 +12,29 @@ pub fn parse_timestring(input: &str) -> IResult<&str, ParsedTime> {
     ))
     .parse(input)
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::parser::absolute::{
+        AbsoluteTime, AbsoluteTimeBuilder, DayOffset, FlexiDate, TimePeriod, WallClockTime,
+    };
+
+    use super::*;
+
+    #[test]
+    fn test_parse_time() {
+        assert_eq!(
+            parse_timestring("3pm tomorrow").unwrap(),
+            (
+                "",
+                ParsedTime::Absolute(
+                    AbsoluteTimeBuilder::new()
+                        .date(FlexiDate::DayOffset(DayOffset::Fixed(1)))
+                        .time(WallClockTime::new(3, 0, 0, Some(TimePeriod::Pm)).unwrap())
+                        .build()
+                        .unwrap()
+                )
+            )
+        )
+    }
+}

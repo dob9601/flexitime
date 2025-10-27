@@ -72,13 +72,13 @@ fn parse_hours(input: &str) -> IResult<&str, u8> {
     map_res(take_while_m_n(1, 2, |c: char| c.is_ascii_digit()), parse_u8).parse(input)
 }
 
-fn parse_mins_or_secs(input: &str) -> IResult<&str, u8> {
-    map_res(take_while_m_n(2, 2, |c: char| c.is_ascii_digit()), parse_u8).parse(input)
-}
-
-fn parse_optional_trailing_seconds(input: &str) -> IResult<&str, Option<u8>> {
+fn parse_optional_mins_or_secs(input: &str) -> IResult<&str, Option<u8>> {
     if let Ok((_, _)) = peek(char::<&str, nom::error::Error<&str>>(':')).parse(input) {
-        let (input, seconds) = preceded(char(':'), parse_mins_or_secs).parse(input)?;
+        let (input, seconds) = preceded(
+            char(':'),
+            map_res(take_while_m_n(2, 2, |c: char| c.is_ascii_digit()), parse_u8),
+        )
+        .parse(input)?;
 
         return Ok((input, Some(seconds)));
     }
@@ -105,17 +105,14 @@ fn parse_am_pm_suffix(input: &str) -> IResult<&str, Option<TimePeriod>> {
 
 pub fn parse_wall_clock_time(input: &str) -> IResult<&str, WallClockTime> {
     map_res(
-        separated_pair(
+        (
             parse_hours,
-            char(':'),
-            (
-                parse_mins_or_secs,
-                parse_optional_trailing_seconds,
-                parse_am_pm_suffix,
-            ),
+            parse_optional_mins_or_secs,
+            parse_optional_mins_or_secs,
+            parse_am_pm_suffix,
         ),
-        |(hours, (minutes, seconds, period))| {
-            WallClockTime::new(hours, minutes, seconds.unwrap_or(0), period)
+        |(hours, minutes, seconds, period)| {
+            WallClockTime::new(hours, minutes.unwrap_or(0), seconds.unwrap_or(0), period)
         },
     )
     .parse(input)
@@ -239,6 +236,17 @@ mod tests {
     fn test_parse_time_with_no_space_period() {
         assert_eq!(
             parse_wall_clock_time("3:00pm"),
+            Ok((
+                "",
+                WallClockTime::new(3, 0, 0, Some(TimePeriod::Pm)).unwrap()
+            ))
+        )
+    }
+
+    #[test]
+    fn test_parse_time_no_mins() {
+        assert_eq!(
+            parse_wall_clock_time("3pm"),
             Ok((
                 "",
                 WallClockTime::new(3, 0, 0, Some(TimePeriod::Pm)).unwrap()

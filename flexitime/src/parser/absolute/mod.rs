@@ -1,15 +1,14 @@
 use chrono::NaiveDate;
-use day_offset::DayOffset;
+pub use day_offset::DayOffset;
 use nom::{
     IResult, Parser, branch::alt, character::complete::space0, combinator::map, multi::fold_many1,
     sequence::delimited,
 };
-use time::{AbsoluteTimeBuilder, FlexiDate};
-use wallclock_time::WallClockTime;
+pub use wallclock_time::{TimePeriod, WallClockTime};
 
 mod day_offset;
 mod time;
-pub use time::AbsoluteTime;
+pub use time::{AbsoluteTime, AbsoluteTimeBuilder, FlexiDate};
 mod date;
 mod wallclock_time;
 
