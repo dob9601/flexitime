@@ -1,4 +1,4 @@
-use chrono::{Datelike, Days, NaiveDate, NaiveDateTime, Timelike, Utc};
+use chrono::{Datelike, Days, NaiveDate, NaiveDateTime, Utc};
 
 use super::{day_offset::DayOffset, wallclock_time::WallClockTime};
 

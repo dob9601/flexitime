@@ -1,12 +1,4 @@
-[package]
-name = "flexitime"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+resolver = "3"
 
-[dependencies]
-chrono = "0.4.42"
-chrono-tz = "0.10.4"
-nom = "8.0.0"
-strum = "0.27.2"
-strum_macros = "0.27.2"
-thiserror = "2.0.17"
+members = ["flexitime", "flexitime-bin"]

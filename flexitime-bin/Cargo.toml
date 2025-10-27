@@ -1,0 +1,13 @@
+[package]
+name = "flexitime-bin"
+version = "0.1.0"
+edition = "2024"
+authors = ["Dan O'Brien <dob9601@gmail.com>"]
+
+[[bin]]
+name = "flexitime"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5.50", features = ["derive"] }
+flexitime = { path = "../flexitime" }
