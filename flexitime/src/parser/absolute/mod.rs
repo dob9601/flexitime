@@ -40,7 +40,7 @@ pub fn parse_absolute_time(input: &str) -> IResult<&str, AbsoluteTime> {
             AbsoluteTimePart::WallClockTime(wall_clock_time) => acc.time(wall_clock_time),
         },
     )
-    .map(|builder| dbg!(builder).build().unwrap())
+    .map(|builder| builder.build().unwrap())
     .parse(input)
 }
 
