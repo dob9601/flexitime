@@ -64,7 +64,7 @@ impl RelativeTime {
         self
     }
 
-    pub fn to_datetime(&self, mut base_time: NaiveDateTime) -> FlexitimeResult<NaiveDateTime> {
+    pub fn to_chrono(&self, mut base_time: NaiveDateTime) -> FlexitimeResult<NaiveDateTime> {
         let sign = if self.negative { -1 } else { 1 };
 
         if let Some(seconds) = self.seconds {
@@ -123,7 +123,7 @@ mod tests {
             .hours(5)
             .minutes(6)
             .seconds(7)
-            .to_datetime(base_time.clone())
+            .to_chrono(base_time.clone())
             .unwrap();
 
         let mut new_time = base_time
@@ -151,7 +151,7 @@ mod tests {
             .minutes(6)
             .seconds(7)
             .ago()
-            .to_datetime(base_time.clone())
+            .to_chrono(base_time.clone())
             .unwrap();
 
         let mut new_time = base_time

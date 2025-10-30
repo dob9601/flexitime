@@ -1,6 +1,6 @@
 use chrono::Weekday;
 use nom::{
-    IResult, Parser,
+    Parser,
     branch::alt,
     bytes::complete::tag_no_case,
     character::complete::space1,
@@ -8,13 +8,15 @@ use nom::{
     sequence::preceded,
 };
 
+use crate::error::FlexitimeResult2;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum DayOffset {
     Fixed(i32),
     NextDayOccurrence(Weekday),
 }
 
-pub fn parse_day_offset(input: &str) -> IResult<&str, DayOffset> {
+pub fn parse_day_offset(input: &str) -> FlexitimeResult2<&str, DayOffset> {
     alt((
         value(DayOffset::Fixed(1), tag_no_case("tomorrow")),
         value(DayOffset::Fixed(-1), tag_no_case("yesterday")),

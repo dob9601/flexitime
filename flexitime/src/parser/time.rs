@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 
 use super::{absolute::AbsoluteTime, relative::time::RelativeTime};
 
@@ -11,7 +11,7 @@ pub enum ParsedTime {
 impl ParsedTime {
     pub fn to_chrono(&self) -> NaiveDateTime {
         match self {
-            ParsedTime::Relative(time) => todo!(),
+            ParsedTime::Relative(time) => time.to_chrono(Utc::now().naive_utc()).unwrap(),
             ParsedTime::Absolute(time) => time.to_chrono(),
         }
     }

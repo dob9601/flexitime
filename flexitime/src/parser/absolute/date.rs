@@ -1,26 +1,48 @@
+use std::num::ParseIntError;
+
 use chrono::NaiveDate;
 use nom::{
-    IResult, Parser,
-    branch::alt,
-    bytes::complete::take_while_m_n,
-    character::complete::char,
+    Parser, branch::alt, bytes::complete::take_while_m_n, character::complete::char,
     combinator::map_res,
-    error::{Error, ErrorKind},
 };
 
-fn date_delimiter(input: &str) -> IResult<&str, char> {
+use crate::error::FlexitimeResult2;
+
+#[derive(Debug, Clone, PartialEq, strum_macros::Display)]
+pub enum DateComponent {
+    Day,
+    Month,
+    Year,
+}
+
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
+pub enum AbsoluteDateError {
+    #[error("Could not parse {0} component of date: {1}")]
+    UnparseableComponent(DateComponent, ParseIntError),
+
+    #[error("{1} is out of range for date component {0}")]
+    OutOfRangeComponent(DateComponent, u16),
+
+    #[error("The provided date is invalid")]
+    InvalidDate,
+}
+
+fn date_delimiter(input: &str) -> FlexitimeResult2<&str, char> {
     alt((char('-'), char('/'))).parse(input)
 }
 
-fn parse_year(input: &str) -> IResult<&str, u16> {
+fn parse_year(input: &str) -> FlexitimeResult2<&str, u16> {
     map_res(
         take_while_m_n(4, 4, |c: char| c.is_ascii_digit()),
         |s: &str| {
             s.parse::<u16>()
-                .map_err(|_| nom::Err::Error(Error::new(input, ErrorKind::Digit)))
+                .map_err(|e| AbsoluteDateError::UnparseableComponent(DateComponent::Year, e))
                 .and_then(|year| {
                     if year > 3000 {
-                        return Err(nom::Err::Failure(Error::new(input, ErrorKind::Digit)));
+                        return Err(AbsoluteDateError::OutOfRangeComponent(
+                            DateComponent::Year,
+                            year,
+                        ));
                     }
 
                     Ok(year)
@@ -30,15 +52,18 @@ fn parse_year(input: &str) -> IResult<&str, u16> {
     .parse(input)
 }
 
-fn parse_day(input: &str) -> IResult<&str, u8> {
+fn parse_day(input: &str) -> FlexitimeResult2<&str, u8> {
     map_res(
         take_while_m_n(1, 2, |c: char| c.is_ascii_digit()),
         |s: &str| {
             s.parse::<u8>()
-                .map_err(|_| nom::Err::Error(Error::new(input, ErrorKind::Digit)))
+                .map_err(|e| AbsoluteDateError::UnparseableComponent(DateComponent::Day, e))
                 .and_then(|day| {
                     if day > 31 {
-                        return Err(nom::Err::Failure(Error::new(input, ErrorKind::Digit)));
+                        return Err(AbsoluteDateError::OutOfRangeComponent(
+                            DateComponent::Day,
+                            day.into(),
+                        ));
                     }
 
                     Ok(day)
@@ -48,15 +73,18 @@ fn parse_day(input: &str) -> IResult<&str, u8> {
     .parse(input)
 }
 
-fn parse_month(input: &str) -> IResult<&str, u8> {
+fn parse_month(input: &str) -> FlexitimeResult2<&str, u8> {
     map_res(
         take_while_m_n(1, 2, |c: char| c.is_ascii_digit()),
         |s: &str| {
             s.parse::<u8>()
-                .map_err(|_| nom::Err::Error(Error::new(input, ErrorKind::Digit)))
+                .map_err(|e| AbsoluteDateError::UnparseableComponent(DateComponent::Month, e))
                 .and_then(|month| {
                     if month > 12 {
-                        return Err(nom::Err::Failure(Error::new(input, ErrorKind::Digit)));
+                        return Err(AbsoluteDateError::OutOfRangeComponent(
+                            DateComponent::Month,
+                            month.into(),
+                        ));
                     }
 
                     Ok(month)
@@ -66,11 +94,11 @@ fn parse_month(input: &str) -> IResult<&str, u8> {
     .parse(input)
 }
 
-pub fn parse_date(input: &str) -> IResult<&str, NaiveDate> {
+pub fn parse_date(input: &str) -> FlexitimeResult2<&str, NaiveDate> {
     alt((parse_day_month_year, parse_year_month_day)).parse(input)
 }
 
-fn parse_day_month_year(input: &str) -> IResult<&str, NaiveDate> {
+fn parse_day_month_year(input: &str) -> FlexitimeResult2<&str, NaiveDate> {
     map_res(
         (
             parse_day,
@@ -80,15 +108,14 @@ fn parse_day_month_year(input: &str) -> IResult<&str, NaiveDate> {
             parse_year,
         ),
         |(day, _, month, _, year)| {
-            NaiveDate::from_ymd_opt(year.into(), month.into(), day.into()).ok_or(
-                nom::Err::Failure::<Error<&str>>(Error::new(input, ErrorKind::Fail)),
-            )
+            NaiveDate::from_ymd_opt(year.into(), month.into(), day.into())
+                .ok_or(AbsoluteDateError::InvalidDate)
         },
     )
     .parse(input)
 }
 
-fn parse_year_month_day(input: &str) -> IResult<&str, NaiveDate> {
+fn parse_year_month_day(input: &str) -> FlexitimeResult2<&str, NaiveDate> {
     map_res(
         (
             parse_year,
@@ -98,9 +125,8 @@ fn parse_year_month_day(input: &str) -> IResult<&str, NaiveDate> {
             parse_day,
         ),
         |(year, _, month, _, day)| {
-            NaiveDate::from_ymd_opt(year.into(), month.into(), day.into()).ok_or(
-                nom::Err::Failure::<Error<&str>>(Error::new(input, ErrorKind::Fail)),
-            )
+            NaiveDate::from_ymd_opt(year.into(), month.into(), day.into())
+                .ok_or(AbsoluteDateError::InvalidDate)
         },
     )
     .parse(input)

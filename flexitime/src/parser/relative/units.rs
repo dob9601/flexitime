@@ -1,12 +1,19 @@
 use std::str::FromStr;
 
 use nom::{
-    IResult, Parser,
+    Parser,
     character::complete::{alpha1, digit1, space0},
     combinator::map_res,
-    error::{Error, ErrorKind},
 };
 use strum_macros::EnumString;
+
+use crate::error::FlexitimeResult2;
+
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
+pub enum RelativeUnitsError {
+    #[error("Unknown unit: {0}")]
+    UnknownUnit(String),
+}
 
 #[derive(Debug, Clone, PartialEq, EnumString)]
 pub enum RelativeUnit {
@@ -72,18 +79,19 @@ pub struct ParsedUnit {
     pub amount: u32,
 }
 
-fn parse_u32(input: &str) -> IResult<&str, u32> {
+fn parse_u32(input: &str) -> FlexitimeResult2<&str, u32> {
     map_res(digit1, |s: &str| s.parse::<u32>()).parse(input)
 }
 
-pub fn parse_unit(input: &str) -> IResult<&str, ParsedUnit> {
+pub fn parse_unit(input: &str) -> FlexitimeResult2<&str, ParsedUnit> {
     let (input, amount) = parse_u32(input)?;
 
     let (input, _) = space0(input)?;
 
     let (input, token) = alpha1(input)?;
-    let unit = RelativeUnit::from_str(token)
-        .map_err(|_err| nom::Err::Error(Error::new(input, ErrorKind::Alpha)))?;
+    let unit = RelativeUnit::from_str(token).map_err(|_err| {
+        nom::Err::Error(RelativeUnitsError::UnknownUnit(token.to_string()).into())
+    })?;
 
     Ok((input, ParsedUnit { amount, unit }))
 }

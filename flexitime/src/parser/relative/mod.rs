@@ -1,5 +1,5 @@
 use nom::{
-    IResult, Parser,
+    Parser,
     bytes::complete::tag_no_case,
     character::complete::{multispace1, space1},
     combinator::opt,
@@ -9,11 +9,13 @@ use suffix::Suffix;
 use time::RelativeTime;
 use units::RelativeUnit;
 
+use crate::error::FlexitimeResult2;
+
 mod suffix;
 pub mod time;
-mod units;
+pub mod units;
 
-pub fn parse_relative_time(input: &str) -> IResult<&str, RelativeTime> {
+pub fn parse_relative_time(input: &str) -> FlexitimeResult2<&str, RelativeTime> {
     let (input, _) = opt((tag_no_case("in"), multispace1)).parse(input)?;
 
     let (input, (units, suffix)) = (

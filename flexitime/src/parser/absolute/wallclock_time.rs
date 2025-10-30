@@ -1,13 +1,15 @@
 use chrono::NaiveTime;
 use nom::{
-    IResult, Parser,
+    Parser,
     branch::alt,
     bytes::complete::{tag_no_case, take_while_m_n},
     character::complete::{char, space0},
     combinator::{map_res, opt, peek, value},
-    sequence::{preceded, separated_pair},
+    sequence::preceded,
 };
 use strum_macros::Display;
+
+use crate::error::FlexitimeResult2;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct WallClockTime {
@@ -68,11 +70,11 @@ fn parse_u8(input: &str) -> Result<u8, std::num::ParseIntError> {
     input.parse()
 }
 
-fn parse_hours(input: &str) -> IResult<&str, u8> {
+fn parse_hours(input: &str) -> FlexitimeResult2<&str, u8> {
     map_res(take_while_m_n(1, 2, |c: char| c.is_ascii_digit()), parse_u8).parse(input)
 }
 
-fn parse_optional_mins_or_secs(input: &str) -> IResult<&str, Option<u8>> {
+fn parse_optional_mins_or_secs(input: &str) -> FlexitimeResult2<&str, Option<u8>> {
     if let Ok((_, _)) = peek(char::<&str, nom::error::Error<&str>>(':')).parse(input) {
         let (input, seconds) = preceded(
             char(':'),
@@ -92,7 +94,7 @@ pub enum TimePeriod {
     Pm,
 }
 
-fn parse_am_pm_suffix(input: &str) -> IResult<&str, Option<TimePeriod>> {
+fn parse_am_pm_suffix(input: &str) -> FlexitimeResult2<&str, Option<TimePeriod>> {
     opt(preceded(
         space0,
         alt((
@@ -103,7 +105,7 @@ fn parse_am_pm_suffix(input: &str) -> IResult<&str, Option<TimePeriod>> {
     .parse(input)
 }
 
-pub fn parse_wall_clock_time(input: &str) -> IResult<&str, WallClockTime> {
+pub fn parse_wall_clock_time(input: &str) -> FlexitimeResult2<&str, WallClockTime> {
     map_res(
         (
             parse_hours,
@@ -120,7 +122,8 @@ pub fn parse_wall_clock_time(input: &str) -> IResult<&str, WallClockTime> {
 
 #[cfg(test)]
 mod tests {
-    use nom::error::ErrorKind;
+
+    use crate::error::FlexitimeError2;
 
     use super::*;
 
@@ -160,9 +163,8 @@ mod tests {
     fn test_hours_out_of_range() {
         assert_eq!(
             parse_wall_clock_time("25:05:30"),
-            Err(nom::Err::Error(nom::error::Error::new(
-                "25:05:30",
-                ErrorKind::MapRes,
+            Err(nom::Err::Error(FlexitimeError2::WallClockTime(
+                WallClockTimeError::OutOfRangeHours
             )))
         )
     }
@@ -171,9 +173,8 @@ mod tests {
     fn test_mins_out_of_range() {
         assert_eq!(
             parse_wall_clock_time("23:65:30"),
-            Err(nom::Err::Error(nom::error::Error::new(
-                "23:65:30",
-                ErrorKind::MapRes,
+            Err(nom::Err::Error(FlexitimeError2::WallClockTime(
+                WallClockTimeError::OutOfRangeMinutes
             )))
         )
     }
@@ -182,9 +183,8 @@ mod tests {
     fn test_secs_out_of_range() {
         assert_eq!(
             parse_wall_clock_time("23:05:60 am"),
-            Err(nom::Err::Error(nom::error::Error::new(
-                "23:05:60 am",
-                ErrorKind::MapRes,
+            Err(nom::Err::Error(FlexitimeError2::WallClockTime(
+                WallClockTimeError::OutOfRangeSeconds
             )))
         )
     }

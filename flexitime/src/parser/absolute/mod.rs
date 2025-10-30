@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 pub use day_offset::DayOffset;
 use nom::{
-    IResult, Parser, branch::alt, character::complete::space0, combinator::map, multi::fold_many1,
+    Parser, branch::alt, character::complete::space0, combinator::map, multi::fold_many1,
     sequence::delimited,
 };
 pub use wallclock_time::{TimePeriod, WallClockTime};
@@ -9,8 +9,10 @@ pub use wallclock_time::{TimePeriod, WallClockTime};
 mod day_offset;
 mod time;
 pub use time::{AbsoluteTime, AbsoluteTimeBuilder, FlexiDate};
-mod date;
-mod wallclock_time;
+
+use crate::error::FlexitimeResult2;
+pub mod date;
+pub mod wallclock_time;
 
 pub enum AbsoluteTimePart {
     DayOffset(DayOffset),
@@ -18,7 +20,7 @@ pub enum AbsoluteTimePart {
     WallClockTime(WallClockTime),
 }
 
-pub fn parse_absolute_time(input: &str) -> IResult<&str, AbsoluteTime> {
+pub fn parse_absolute_time(input: &str) -> FlexitimeResult2<&str, AbsoluteTime> {
     fold_many1(
         delimited(
             space0,

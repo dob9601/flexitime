@@ -1,11 +1,13 @@
-use nom::{IResult, Parser, branch::alt, combinator::map};
+use nom::{Parser, branch::alt, combinator::map};
 use time::ParsedTime;
 
-mod absolute;
-mod relative;
+use crate::error::FlexitimeResult2;
+
+pub mod absolute;
+pub mod relative;
 mod time;
 
-pub fn parse_timestring(input: &str) -> IResult<&str, ParsedTime> {
+pub fn parse_timestring(input: &str) -> FlexitimeResult2<&str, ParsedTime> {
     alt((
         map(relative::parse_relative_time, |t| ParsedTime::Relative(t)),
         map(absolute::parse_absolute_time, |t| ParsedTime::Absolute(t)),
@@ -16,7 +18,7 @@ pub fn parse_timestring(input: &str) -> IResult<&str, ParsedTime> {
 #[cfg(test)]
 mod tests {
     use crate::parser::absolute::{
-        AbsoluteTime, AbsoluteTimeBuilder, DayOffset, FlexiDate, TimePeriod, WallClockTime,
+        AbsoluteTimeBuilder, DayOffset, FlexiDate, TimePeriod, WallClockTime,
     };
 
     use super::*;

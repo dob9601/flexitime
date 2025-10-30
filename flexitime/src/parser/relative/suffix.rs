@@ -1,5 +1,5 @@
 use nom::{
-    IResult, Parser,
+    Parser,
     branch::alt,
     bytes::tag_no_case,
     character::complete::space1,
@@ -7,13 +7,15 @@ use nom::{
     sequence::preceded,
 };
 
+use crate::error::FlexitimeResult2;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Suffix {
     Ago,
     Hence,
 }
 
-pub fn parse_suffix(input: &str) -> IResult<&str, Option<Suffix>> {
+pub fn parse_suffix(input: &str) -> FlexitimeResult2<&str, Option<Suffix>> {
     opt(preceded(
         space1,
         alt((
