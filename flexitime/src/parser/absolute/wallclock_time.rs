@@ -24,14 +24,20 @@ impl WallClockTime {
     }
 }
 
-#[derive(PartialEq, Debug, Display)]
+#[derive(PartialEq, Debug, thiserror::Error)]
 pub enum WallClockTimeError {
-    OutOfRangeHours,
-    OutOfRangeMinutes,
-    OutOfRangeSeconds,
-}
+    #[error("Hours value '{0}' is out of range in a 24-hour format")]
+    OutOfRangeHours24(u8),
 
-impl std::error::Error for WallClockTimeError {}
+    #[error("Hours value '{0}' is out of range in a 12-hour format")]
+    OutOfRangeHours12(u8),
+
+    #[error("Minutes value '{0}' is out of range")]
+    OutOfRangeMinutes(u8),
+
+    #[error("Seconds value '{0}' is out of range")]
+    OutOfRangeSeconds(u8),
+}
 
 impl WallClockTime {
     pub fn new(
@@ -40,6 +46,12 @@ impl WallClockTime {
         second: u8,
         period: Option<TimePeriod>,
     ) -> Result<Self, WallClockTimeError> {
+        if hour > 23 && period.is_none() {
+            return Err(WallClockTimeError::OutOfRangeHours24(hour));
+        } else if (hour < 1 || hour > 12) && period.is_some() {
+            return Err(WallClockTimeError::OutOfRangeHours12(hour));
+        }
+
         if let Some(TimePeriod::Pm) = period {
             hour += 12;
 
@@ -48,14 +60,11 @@ impl WallClockTime {
             }
         }
 
-        if hour > 23 {
-            return Err(WallClockTimeError::OutOfRangeHours);
-        }
         if minute > 59 {
-            return Err(WallClockTimeError::OutOfRangeMinutes);
+            return Err(WallClockTimeError::OutOfRangeMinutes(minute));
         }
         if second > 59 {
-            return Err(WallClockTimeError::OutOfRangeSeconds);
+            return Err(WallClockTimeError::OutOfRangeSeconds(second));
         }
 
         Ok(WallClockTime {
@@ -164,7 +173,7 @@ mod tests {
         assert_eq!(
             parse_wall_clock_time("25:05:30"),
             Err(nom::Err::Error(FlexitimeError2::WallClockTime(
-                WallClockTimeError::OutOfRangeHours
+                WallClockTimeError::OutOfRangeHours24(25)
             )))
         )
     }
@@ -174,7 +183,7 @@ mod tests {
         assert_eq!(
             parse_wall_clock_time("23:65:30"),
             Err(nom::Err::Error(FlexitimeError2::WallClockTime(
-                WallClockTimeError::OutOfRangeMinutes
+                WallClockTimeError::OutOfRangeMinutes(65)
             )))
         )
     }
@@ -182,9 +191,9 @@ mod tests {
     #[test]
     fn test_secs_out_of_range() {
         assert_eq!(
-            parse_wall_clock_time("23:05:60 am"),
+            parse_wall_clock_time("23:05:60"),
             Err(nom::Err::Error(FlexitimeError2::WallClockTime(
-                WallClockTimeError::OutOfRangeSeconds
+                WallClockTimeError::OutOfRangeSeconds(60)
             )))
         )
     }
@@ -251,6 +260,26 @@ mod tests {
                 "",
                 WallClockTime::new(3, 0, 0, Some(TimePeriod::Pm)).unwrap()
             ))
+        )
+    }
+
+    #[test]
+    fn test_out_of_range_12_hour_overflow() {
+        assert_eq!(
+            parse_wall_clock_time("15am"),
+            Err(nom::Err::Error(FlexitimeError2::WallClockTime(
+                WallClockTimeError::OutOfRangeHours12(15)
+            )))
+        )
+    }
+
+    #[test]
+    fn test_out_of_range_12_hour_underflow() {
+        assert_eq!(
+            parse_wall_clock_time("0am"),
+            Err(nom::Err::Error(FlexitimeError2::WallClockTime(
+                WallClockTimeError::OutOfRangeHours12(0)
+            )))
         )
     }
 }
