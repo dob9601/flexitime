@@ -7,6 +7,7 @@ use nom::{
 pub use wallclock_time::{TimePeriod, WallClockTime};
 
 mod day_offset;
+mod month_offset;
 mod time;
 pub use time::{AbsoluteTime, AbsoluteTimeBuilder, FlexiDate};
 
