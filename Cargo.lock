@@ -183,7 +183,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "flexitime-bin"
+name = "flexitime-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
