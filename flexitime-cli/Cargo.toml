@@ -10,4 +10,4 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.5.50", features = ["derive"] }
-flexitime = { path = "../flexitime" }
+flexitime = "0.1.0"
