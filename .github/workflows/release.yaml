@@ -1,8 +1,5 @@
 name: Release-plz
 
-permissions:
-  id-token: write
-
 on:
   push:
     branches:
@@ -15,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - &checkout
         name: Checkout repository

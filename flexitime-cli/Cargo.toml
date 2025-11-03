@@ -3,6 +3,8 @@ name = "flexitime-cli"
 version = "0.1.0"
 edition = "2024"
 authors = ["Dan O'Brien <dob9601@gmail.com>"]
+license = "MIT"
+description = "A command-line tool for flexible time parsing"
 
 [[bin]]
 name = "flexitime"
