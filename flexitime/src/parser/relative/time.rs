@@ -64,7 +64,7 @@ impl RelativeTime {
         self
     }
 
-    pub fn to_chrono(&self, mut base_time: NaiveDateTime) -> FlexitimeResult<NaiveDateTime> {
+    pub fn to_chrono(&self, mut base_time: NaiveDateTime) -> NaiveDateTime {
         let sign = if self.negative { -1 } else { 1 };
 
         if let Some(seconds) = self.seconds {
@@ -89,7 +89,7 @@ impl RelativeTime {
             } else {
                 base_time.checked_add_months(months)
             }
-            .ok_or(FlexitimeError::InvalidMonths)?;
+            .unwrap();
         }
         if let Some(years) = self.years {
             let months = Months::new(years * 12);
@@ -98,10 +98,10 @@ impl RelativeTime {
             } else {
                 base_time.checked_add_months(months)
             }
-            .ok_or(FlexitimeError::InvalidYears)?;
+            .unwrap();
         }
 
-        Ok(base_time)
+        base_time
     }
 }
 
@@ -123,8 +123,7 @@ mod tests {
             .hours(5)
             .minutes(6)
             .seconds(7)
-            .to_chrono(base_time.clone())
-            .unwrap();
+            .to_chrono(base_time.clone());
 
         let mut new_time = base_time
             + Duration::seconds(7)
@@ -151,8 +150,7 @@ mod tests {
             .minutes(6)
             .seconds(7)
             .ago()
-            .to_chrono(base_time.clone())
-            .unwrap();
+            .to_chrono(base_time.clone());
 
         let mut new_time = base_time
             - Duration::seconds(7)

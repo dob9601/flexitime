@@ -6,7 +6,7 @@ use nom::{
     combinator::map_res,
 };
 
-use crate::error::FlexitimeResult2;
+use crate::error::FlexitimeResult;
 
 #[derive(Debug, Clone, PartialEq, strum_macros::Display)]
 pub enum DateComponent {
@@ -27,11 +27,11 @@ pub enum AbsoluteDateError {
     InvalidDate,
 }
 
-fn date_delimiter(input: &str) -> FlexitimeResult2<&str, char> {
+fn date_delimiter(input: &str) -> FlexitimeResult<&str, char> {
     alt((char('-'), char('/'))).parse(input)
 }
 
-fn parse_year(input: &str) -> FlexitimeResult2<&str, u16> {
+fn parse_year(input: &str) -> FlexitimeResult<&str, u16> {
     map_res(
         take_while_m_n(4, 4, |c: char| c.is_ascii_digit()),
         |s: &str| {
@@ -52,7 +52,7 @@ fn parse_year(input: &str) -> FlexitimeResult2<&str, u16> {
     .parse(input)
 }
 
-fn parse_day(input: &str) -> FlexitimeResult2<&str, u8> {
+fn parse_day(input: &str) -> FlexitimeResult<&str, u8> {
     map_res(
         take_while_m_n(1, 2, |c: char| c.is_ascii_digit()),
         |s: &str| {
@@ -73,7 +73,7 @@ fn parse_day(input: &str) -> FlexitimeResult2<&str, u8> {
     .parse(input)
 }
 
-fn parse_month(input: &str) -> FlexitimeResult2<&str, u8> {
+fn parse_month(input: &str) -> FlexitimeResult<&str, u8> {
     map_res(
         take_while_m_n(1, 2, |c: char| c.is_ascii_digit()),
         |s: &str| {
@@ -94,11 +94,11 @@ fn parse_month(input: &str) -> FlexitimeResult2<&str, u8> {
     .parse(input)
 }
 
-pub fn parse_date(input: &str) -> FlexitimeResult2<&str, NaiveDate> {
+pub fn parse_date(input: &str) -> FlexitimeResult<&str, NaiveDate> {
     alt((parse_day_month_year, parse_year_month_day)).parse(input)
 }
 
-fn parse_day_month_year(input: &str) -> FlexitimeResult2<&str, NaiveDate> {
+fn parse_day_month_year(input: &str) -> FlexitimeResult<&str, NaiveDate> {
     map_res(
         (
             parse_day,
@@ -115,7 +115,7 @@ fn parse_day_month_year(input: &str) -> FlexitimeResult2<&str, NaiveDate> {
     .parse(input)
 }
 
-fn parse_year_month_day(input: &str) -> FlexitimeResult2<&str, NaiveDate> {
+fn parse_year_month_day(input: &str) -> FlexitimeResult<&str, NaiveDate> {
     map_res(
         (
             parse_year,

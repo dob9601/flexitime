@@ -8,7 +8,7 @@ use nom::{
     sequence::preceded,
 };
 
-use crate::error::FlexitimeResult2;
+use crate::error::FlexitimeResult;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum DayOffset {
@@ -16,7 +16,7 @@ pub enum DayOffset {
     NextDayOccurrence(Weekday),
 }
 
-pub fn parse_day_offset(input: &str) -> FlexitimeResult2<&str, DayOffset> {
+pub fn parse_day_offset(input: &str) -> FlexitimeResult<&str, DayOffset> {
     alt((
         value(DayOffset::Fixed(1), tag_no_case("tomorrow")),
         value(DayOffset::Fixed(-1), tag_no_case("yesterday")),

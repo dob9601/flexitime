@@ -8,14 +8,14 @@ use nom::{
     sequence::preceded,
 };
 
-use crate::error::FlexitimeResult2;
+use crate::error::FlexitimeResult;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MonthOffset {
     NextMonthOccurrence(Month),
 }
 
-pub fn parse_month_offset(input: &str) -> FlexitimeResult2<&str, MonthOffset> {
+pub fn parse_month_offset(input: &str) -> FlexitimeResult<&str, MonthOffset> {
     preceded(
         opt((alt((tag_no_case("this"), tag_no_case("next"))), space1)),
         alt((

@@ -1,13 +1,13 @@
 use nom::{Parser, branch::alt, combinator::map};
 use time::ParsedTime;
 
-use crate::error::FlexitimeResult2;
+use crate::error::FlexitimeResult;
 
 pub mod absolute;
 pub mod relative;
 mod time;
 
-pub fn parse_timestring(input: &str) -> FlexitimeResult2<&str, ParsedTime> {
+pub fn parse_timestring(input: &str) -> FlexitimeResult<&str, ParsedTime> {
     alt((
         map(relative::parse_relative_time, |t| ParsedTime::Relative(t)),
         map(absolute::parse_absolute_time, |t| ParsedTime::Absolute(t)),

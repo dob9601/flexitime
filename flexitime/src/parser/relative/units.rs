@@ -7,7 +7,7 @@ use nom::{
 };
 use strum_macros::EnumString;
 
-use crate::error::FlexitimeResult2;
+use crate::error::FlexitimeResult;
 
 #[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum RelativeUnitsError {
@@ -79,11 +79,11 @@ pub struct ParsedUnit {
     pub amount: u32,
 }
 
-fn parse_u32(input: &str) -> FlexitimeResult2<&str, u32> {
+fn parse_u32(input: &str) -> FlexitimeResult<&str, u32> {
     map_res(digit1, |s: &str| s.parse::<u32>()).parse(input)
 }
 
-pub fn parse_unit(input: &str) -> FlexitimeResult2<&str, ParsedUnit> {
+pub fn parse_unit(input: &str) -> FlexitimeResult<&str, ParsedUnit> {
     let (input, amount) = parse_u32(input)?;
 
     let (input, _) = space0(input)?;

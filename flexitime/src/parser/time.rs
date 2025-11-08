@@ -11,7 +11,7 @@ pub enum ParsedTime {
 impl ParsedTime {
     pub fn to_chrono(&self) -> NaiveDateTime {
         match self {
-            ParsedTime::Relative(time) => time.to_chrono(Utc::now().naive_utc()).unwrap(),
+            ParsedTime::Relative(time) => time.to_chrono(Utc::now().naive_utc()),
             ParsedTime::Absolute(time) => time.to_chrono(),
         }
     }

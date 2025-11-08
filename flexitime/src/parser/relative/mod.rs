@@ -9,13 +9,13 @@ use suffix::Suffix;
 use time::RelativeTime;
 use units::RelativeUnit;
 
-use crate::error::FlexitimeResult2;
+use crate::error::FlexitimeResult;
 
 mod suffix;
 pub mod time;
 pub mod units;
 
-pub fn parse_relative_time(input: &str) -> FlexitimeResult2<&str, RelativeTime> {
+pub fn parse_relative_time(input: &str) -> FlexitimeResult<&str, RelativeTime> {
     let (input, _) = opt((tag_no_case("in"), multispace1)).parse(input)?;
 
     let (input, (units, suffix)) = (

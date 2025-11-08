@@ -8,7 +8,7 @@ use nom::{
     sequence::preceded,
 };
 
-use crate::error::FlexitimeResult2;
+use crate::error::FlexitimeResult;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct WallClockTime {
@@ -78,11 +78,11 @@ fn parse_u8(input: &str) -> Result<u8, std::num::ParseIntError> {
     input.parse()
 }
 
-fn parse_hours(input: &str) -> FlexitimeResult2<&str, u8> {
+fn parse_hours(input: &str) -> FlexitimeResult<&str, u8> {
     map_res(take_while_m_n(1, 2, |c: char| c.is_ascii_digit()), parse_u8).parse(input)
 }
 
-fn parse_optional_mins_or_secs(input: &str) -> FlexitimeResult2<&str, Option<u8>> {
+fn parse_optional_mins_or_secs(input: &str) -> FlexitimeResult<&str, Option<u8>> {
     if let Ok((_, _)) = peek(char::<&str, nom::error::Error<&str>>(':')).parse(input) {
         let (input, seconds) = preceded(
             char(':'),
@@ -102,7 +102,7 @@ pub enum TimePeriod {
     Pm,
 }
 
-fn parse_am_pm_suffix(input: &str) -> FlexitimeResult2<&str, Option<TimePeriod>> {
+fn parse_am_pm_suffix(input: &str) -> FlexitimeResult<&str, Option<TimePeriod>> {
     opt(preceded(
         space0,
         alt((
@@ -113,7 +113,7 @@ fn parse_am_pm_suffix(input: &str) -> FlexitimeResult2<&str, Option<TimePeriod>>
     .parse(input)
 }
 
-pub fn parse_wall_clock_time(input: &str) -> FlexitimeResult2<&str, WallClockTime> {
+pub fn parse_wall_clock_time(input: &str) -> FlexitimeResult<&str, WallClockTime> {
     map_res(
         (
             parse_hours,
@@ -131,7 +131,7 @@ pub fn parse_wall_clock_time(input: &str) -> FlexitimeResult2<&str, WallClockTim
 #[cfg(test)]
 mod tests {
 
-    use crate::error::FlexitimeError2;
+    use crate::error::FlexitimeError;
 
     use super::*;
 
@@ -171,7 +171,7 @@ mod tests {
     fn test_hours_out_of_range() {
         assert_eq!(
             parse_wall_clock_time("25:05:30"),
-            Err(nom::Err::Error(FlexitimeError2::WallClockTime(
+            Err(nom::Err::Error(FlexitimeError::WallClockTime(
                 WallClockTimeError::OutOfRangeHours24(25)
             )))
         )
@@ -181,7 +181,7 @@ mod tests {
     fn test_mins_out_of_range() {
         assert_eq!(
             parse_wall_clock_time("23:65:30"),
-            Err(nom::Err::Error(FlexitimeError2::WallClockTime(
+            Err(nom::Err::Error(FlexitimeError::WallClockTime(
                 WallClockTimeError::OutOfRangeMinutes(65)
             )))
         )
@@ -191,7 +191,7 @@ mod tests {
     fn test_secs_out_of_range() {
         assert_eq!(
             parse_wall_clock_time("23:05:60"),
-            Err(nom::Err::Error(FlexitimeError2::WallClockTime(
+            Err(nom::Err::Error(FlexitimeError::WallClockTime(
                 WallClockTimeError::OutOfRangeSeconds(60)
             )))
         )
@@ -266,7 +266,7 @@ mod tests {
     fn test_out_of_range_12_hour_overflow() {
         assert_eq!(
             parse_wall_clock_time("15am"),
-            Err(nom::Err::Error(FlexitimeError2::WallClockTime(
+            Err(nom::Err::Error(FlexitimeError::WallClockTime(
                 WallClockTimeError::OutOfRangeHours12(15)
             )))
         )
@@ -276,7 +276,7 @@ mod tests {
     fn test_out_of_range_12_hour_underflow() {
         assert_eq!(
             parse_wall_clock_time("0am"),
-            Err(nom::Err::Error(FlexitimeError2::WallClockTime(
+            Err(nom::Err::Error(FlexitimeError::WallClockTime(
                 WallClockTimeError::OutOfRangeHours12(0)
             )))
         )

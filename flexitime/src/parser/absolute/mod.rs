@@ -12,7 +12,7 @@ pub use month_offset::MonthOffset;
 mod time;
 pub use time::{AbsoluteTime, AbsoluteTimeBuilder, FlexiDate};
 
-use crate::{error::FlexitimeResult2};
+use crate::error::FlexitimeResult;
 pub mod date;
 pub mod wallclock_time;
 
@@ -23,7 +23,7 @@ pub enum AbsoluteTimePart {
     MonthOffset(MonthOffset),
 }
 
-pub fn parse_absolute_time(input: &str) -> FlexitimeResult2<&str, AbsoluteTime> {
+pub fn parse_absolute_time(input: &str) -> FlexitimeResult<&str, AbsoluteTime> {
     fold_many1(
         delimited(
             space0,
@@ -34,7 +34,10 @@ pub fn parse_absolute_time(input: &str) -> FlexitimeResult2<&str, AbsoluteTime> 
                     AbsoluteTimePart::WallClockTime,
                 ),
                 map(date::parse_date, AbsoluteTimePart::Date),
-                map(month_offset::parse_month_offset, AbsoluteTimePart::MonthOffset),
+                map(
+                    month_offset::parse_month_offset,
+                    AbsoluteTimePart::MonthOffset,
+                ),
             )),
             space0,
         ),

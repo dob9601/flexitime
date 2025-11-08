@@ -7,7 +7,7 @@ use nom::{
     sequence::preceded,
 };
 
-use crate::error::FlexitimeResult2;
+use crate::error::FlexitimeResult;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Suffix {
@@ -15,7 +15,7 @@ pub enum Suffix {
     Hence,
 }
 
-pub fn parse_suffix(input: &str) -> FlexitimeResult2<&str, Option<Suffix>> {
+pub fn parse_suffix(input: &str) -> FlexitimeResult<&str, Option<Suffix>> {
     opt(preceded(
         space1,
         alt((
