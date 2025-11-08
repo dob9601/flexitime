@@ -3,6 +3,7 @@ use nom::{
     Parser,
     branch::alt,
     bytes::complete::tag_no_case,
+    character::complete::space1,
     combinator::{opt, value},
     sequence::preceded,
 };
@@ -16,7 +17,7 @@ pub enum MonthOffset {
 
 pub fn parse_month_offset(input: &str) -> FlexitimeResult2<&str, MonthOffset> {
     preceded(
-        opt(alt((tag_no_case("this"), tag_no_case("next")))),
+        opt((alt((tag_no_case("this"), tag_no_case("next"))), space1)),
         alt((
             value(
                 MonthOffset::NextMonthOccurrence(Month::January),
