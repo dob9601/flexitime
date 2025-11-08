@@ -1,11 +1,12 @@
-use chrono::{Datelike, Days, NaiveDate, NaiveDateTime, Utc};
+use chrono::{Datelike, Days, Months, NaiveDate, NaiveDateTime, Utc};
 
-use super::{day_offset::DayOffset, wallclock_time::WallClockTime};
+use super::{day_offset::DayOffset, wallclock_time::WallClockTime, month_offset::MonthOffset};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum FlexiDate {
     Date(NaiveDate),
     DayOffset(DayOffset),
+    MonthOffset(MonthOffset)
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -38,6 +39,12 @@ impl AbsoluteTime {
                 let current_day = datetime.weekday();
                 let offset = 7 - current_day.days_since(weekday.clone());
                 datetime.checked_add_days(Days::new(offset.into())).unwrap()
+            },
+            FlexiDate::MonthOffset(MonthOffset::NextMonthOccurrence(month)) => {
+                while datetime.month0() != (*month as u32) {
+                    datetime = datetime.checked_add_months(Months::new(1)).unwrap();
+                }
+                datetime
             }
         };
 

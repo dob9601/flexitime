@@ -7,7 +7,6 @@ use nom::{
     combinator::{map_res, opt, peek, value},
     sequence::preceded,
 };
-use strum_macros::Display;
 
 use crate::error::FlexitimeResult2;
 
