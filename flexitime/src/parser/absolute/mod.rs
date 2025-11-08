@@ -8,10 +8,11 @@ pub use wallclock_time::{TimePeriod, WallClockTime};
 
 mod day_offset;
 mod month_offset;
+pub use month_offset::MonthOffset;
 mod time;
 pub use time::{AbsoluteTime, AbsoluteTimeBuilder, FlexiDate};
 
-use crate::error::FlexitimeResult2;
+use crate::{error::FlexitimeResult2};
 pub mod date;
 pub mod wallclock_time;
 
@@ -19,6 +20,7 @@ pub enum AbsoluteTimePart {
     DayOffset(DayOffset),
     Date(NaiveDate),
     WallClockTime(WallClockTime),
+    MonthOffset(MonthOffset),
 }
 
 pub fn parse_absolute_time(input: &str) -> FlexitimeResult2<&str, AbsoluteTime> {
@@ -32,6 +34,7 @@ pub fn parse_absolute_time(input: &str) -> FlexitimeResult2<&str, AbsoluteTime> 
                     AbsoluteTimePart::WallClockTime,
                 ),
                 map(date::parse_date, AbsoluteTimePart::Date),
+                map(month_offset::parse_month_offset, AbsoluteTimePart::MonthOffset),
             )),
             space0,
         ),
@@ -39,6 +42,7 @@ pub fn parse_absolute_time(input: &str) -> FlexitimeResult2<&str, AbsoluteTime> 
         |acc, part| match part {
             AbsoluteTimePart::DayOffset(offset) => acc.date(FlexiDate::DayOffset(offset)),
             AbsoluteTimePart::Date(date) => acc.date(FlexiDate::Date(date)),
+            AbsoluteTimePart::MonthOffset(date) => acc.date(FlexiDate::MonthOffset(date)),
             AbsoluteTimePart::WallClockTime(wall_clock_time) => acc.time(wall_clock_time),
         },
     )
